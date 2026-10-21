@@ -1,0 +1,52 @@
+# Lint and format settings following the Google Python Style Guide:
+# https://google.github.io/styleguide/pyguide.html
+target-version = "py311"
+line-length = 80
+extend-exclude = ["**/build"]
+
+[format]
+quote-style = "double"
+docstring-code-format = true
+
+[lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # import order (Google profile below)
+  "N",   # pep8-naming
+  "D",   # docstrings (Google convention below)
+  "UP",  # modern syntax
+  "B",   # likely bugs
+]
+ignore = [
+  "D105",  # Magic methods need no docstring.
+  "D107",  # __init__ args are documented in __init__ or the class.
+  "B008",  # FastAPI declares defaults with function calls (Query, File).
+]
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.isort]
+# Google: one import per line, sorted within sections, modules not names.
+force-single-line = true
+force-sort-within-sections = true
+order-by-type = false
+single-line-exclusions = ["typing", "collections.abc"]
+known-first-party = [
+  "halyard_common",
+  "accounts",
+  "commercial",
+  "operations",
+  "billing",
+  "notifications",
+  "dev_server",
+]
+
+[lint.per-file-ignores]
+# Test names describe the behaviour; docstrings on every test add noise.
+"**/tests/**" = ["D100", "D103"]
+"tests/**" = ["D100", "D103"]
+# Revision messages are free text typed at the command line.
+"**/migrations/versions/**" = ["D415"]

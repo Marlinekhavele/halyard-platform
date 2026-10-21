@@ -1,0 +1,31 @@
+# Test coverage for the shared package and every service.
+#   make coverage          terminal summary + htmlcov/index.html
+# CI fails when total coverage drops below fail_under.
+[run]
+branch = true
+source =
+    halyard_common
+    accounts
+    commercial
+    operations
+    billing
+    notifications
+omit =
+    */migrations/*
+    */halyard_common/telemetry.py
+
+[report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+precision = 1
+exclude_also =
+    if typing.TYPE_CHECKING:
+    if __name__ == .__main__.:
+    raise NotImplementedError
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml

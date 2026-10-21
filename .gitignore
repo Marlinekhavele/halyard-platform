@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.venv/
+.dev/
+*.db
+storage/
+.env
+.DS_Store
+
+# Local environments and build output
+**/build/
+.ruff_cache/
+
+# Coverage reports
+.coverage
+coverage.xml
+htmlcov/

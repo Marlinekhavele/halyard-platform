@@ -1,0 +1,206 @@
+# Halyard backend: every service and its infrastructure on one machine.
+#   cp .env.example .env && docker compose up --build
+# APIs are served under http://localhost:8080/api/<service> (docs at
+# /api/<service>/docs). Also: http://localhost:8025 (emails, Mailpit),
+# http://localhost:15672 (RabbitMQ), http://localhost:16686 (traces, Jaeger).
+
+x-service: &service
+  build:
+    context: .
+    dockerfile: services/Dockerfile
+  restart: unless-stopped
+  depends_on: &infra
+    postgres: { condition: service_healthy }
+    rabbitmq: { condition: service_healthy }
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+    interval: 5s
+    retries: 30
+  networks: [halyard]
+
+x-service-env: &service-env
+  BROKER_URL: amqp://halyard:${RABBITMQ_PASSWORD:-halyard}@rabbitmq:5672/
+  JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+  CORS_ORIGINS: ${PUBLIC_URL:-http://localhost:8080}
+  SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  # Tables come from Alembic migrations, applied when each container starts.
+  AUTO_CREATE_TABLES: "false"
+  # One JSON object per line, ready for log aggregation.
+  LOG_JSON: "true"
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+
+services:
+  # ---- Gateway: one entry point for every API -------------------------------------------
+  gateway:
+    image: traefik:v3.1
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --accesslog=true
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      - "8081:8080" # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [halyard]
+
+  # ---- Infrastructure ------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: halyard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-halyard}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U halyard"]
+      interval: 5s
+      retries: 20
+    networks: [halyard]
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: halyard
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-halyard}
+    ports: ["15672:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 20
+    volumes: [rabbitdata:/var/lib/rabbitmq]
+    networks: [halyard]
+
+  mailpit: # catches every email in development; replace with real SMTP in production
+    image: axllent/mailpit:latest
+    ports: ["8025:8025"]
+    networks: [halyard]
+
+  jaeger: # distributed tracing: follow one request across all services
+    image: jaegertracing/all-in-one:1.60
+    environment: { COLLECTOR_OTLP_ENABLED: "true" }
+    ports: ["16686:16686"]
+    networks: [halyard]
+
+  # ---- Backend microservices -------------------------------------------------------------
+# Start order is consumers first (notifications -> billing -> operations ->
+# commercial, accounts). A RabbitMQ queue exists only once its consumer has
+# started, so this guarantees no event published at startup is dropped.
+  accounts:
+    <<: *service
+    depends_on:
+      <<: *infra
+      notifications: { condition: service_healthy }
+    build: { context: ., dockerfile: services/Dockerfile, args: { SERVICE: accounts } }
+    environment:
+      <<: *service-env
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:-halyard}@postgres:5432/halyard_accounts
+      ROOT_PATH: /api/accounts
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.accounts.rule=PathPrefix(`/api/accounts`)
+      - traefik.http.routers.accounts.middlewares=accounts-strip
+      - traefik.http.middlewares.accounts-strip.stripprefix.prefixes=/api/accounts
+      - traefik.http.services.accounts.loadbalancer.server.port=8000
+
+  commercial:
+    <<: *service
+    depends_on:
+      <<: *infra
+      operations: { condition: service_healthy }
+      billing: { condition: service_healthy }
+      notifications: { condition: service_healthy }
+    build: { context: ., dockerfile: services/Dockerfile, args: { SERVICE: commercial } }
+    environment:
+      <<: *service-env
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:-halyard}@postgres:5432/halyard_commercial
+      ROOT_PATH: /api/commercial
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.commercial.rule=PathPrefix(`/api/commercial`)
+      - traefik.http.routers.commercial.middlewares=commercial-strip
+      - traefik.http.middlewares.commercial-strip.stripprefix.prefixes=/api/commercial
+      - traefik.http.services.commercial.loadbalancer.server.port=8000
+
+  operations:
+    <<: *service
+    depends_on:
+      <<: *infra
+      billing: { condition: service_healthy }
+      notifications: { condition: service_healthy }
+    build: { context: ., dockerfile: services/Dockerfile, args: { SERVICE: operations } }
+    environment:
+      <<: *service-env
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:-halyard}@postgres:5432/halyard_operations
+      ROOT_PATH: /api/operations
+      DOCUMENT_STORAGE_DIR: /data/documents
+      TRACKING_WEBHOOK_TOKEN: ${TRACKING_WEBHOOK_TOKEN:-dev-tracking-token}
+    volumes: [documents:/data]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.operations.rule=PathPrefix(`/api/operations`)
+      - traefik.http.routers.operations.middlewares=operations-strip
+      - traefik.http.middlewares.operations-strip.stripprefix.prefixes=/api/operations
+      - traefik.http.services.operations.loadbalancer.server.port=8000
+
+  billing:
+    <<: *service
+    depends_on:
+      <<: *infra
+      notifications: { condition: service_healthy }
+    build: { context: ., dockerfile: services/Dockerfile, args: { SERVICE: billing } }
+    environment:
+      <<: *service-env
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:-halyard}@postgres:5432/halyard_billing
+      ROOT_PATH: /api/billing
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.billing.rule=PathPrefix(`/api/billing`)
+      - traefik.http.routers.billing.middlewares=billing-strip
+      - traefik.http.middlewares.billing-strip.stripprefix.prefixes=/api/billing
+      - traefik.http.services.billing.loadbalancer.server.port=8000
+
+  notifications:
+    <<: *service
+    build: { context: ., dockerfile: services/Dockerfile, args: { SERVICE: notifications } }
+    environment:
+      <<: *service-env
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:-halyard}@postgres:5432/halyard_notifications
+      ROOT_PATH: /api/notifications
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-Halyard <hello@halyard.example>}
+      APP_URL: ${PUBLIC_URL:-http://localhost:8080}/app
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.notifications.rule=PathPrefix(`/api/notifications`)
+      - traefik.http.routers.notifications.middlewares=notifications-strip
+      - traefik.http.middlewares.notifications-strip.stripprefix.prefixes=/api/notifications
+      - traefik.http.services.notifications.loadbalancer.server.port=8000
+
+  # ---- Demo data (runs once, then exits) -------------------------------------------------
+  demo-seeder:
+    build: { context: ., dockerfile: services/Dockerfile, args: { SERVICE: accounts } }
+    command: ["python", "/scripts/seed_demo.py", "--base", "http://gateway"]
+    volumes: ["./scripts:/scripts:ro"]
+    depends_on: [gateway, accounts, commercial, operations, billing, notifications]
+    restart: "no"
+    profiles: [demo]
+    networks: [halyard]
+
+networks:
+  # Fixed name so the frontend stack (halyard-web) can join the gateway.
+  halyard: { name: halyard }
+
+volumes:
+  pgdata: {}
+  rabbitdata: {}
+  documents: {}

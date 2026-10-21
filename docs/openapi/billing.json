@@ -1,0 +1,626 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Halyard Billing",
+    "description": "Customer invoices, partner costs and gross profit per shipment.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices": {
+      "get": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "List Invoices",
+        "description": "Lists invoices; customers only see issued and later ones.",
+        "operationId": "list_invoices_invoices_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvoiceOut"
+                  },
+                  "title": "Response List Invoices Invoices Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{invoice_id}": {
+      "get": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Get Invoice",
+        "description": "Returns one invoice.",
+        "operationId": "get_invoice_invoices__invoice_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{invoice_id}/mark-paid": {
+      "post": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Mark Paid",
+        "description": "Records payment of an issued invoice.",
+        "operationId": "mark_paid_invoices__invoice_id__mark_paid_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/margin": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Margin Report",
+        "description": "Gross profit per shipment and per TEU.",
+        "operationId": "margin_report_reports_margin_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarginReport"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InvoiceLineOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "sell_cents": {
+            "type": "integer",
+            "title": "Sell Cents"
+          },
+          "cost_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Cents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "label",
+          "quantity",
+          "sell_cents"
+        ],
+        "title": "InvoiceLineOut",
+        "description": "One charge. ``cost_cents`` is only shown to ops."
+      },
+      "InvoiceOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "company_id": {
+            "type": "string",
+            "title": "Company Id"
+          },
+          "booking_id": {
+            "type": "string",
+            "title": "Booking Id"
+          },
+          "shipment_ref": {
+            "type": "string",
+            "title": "Shipment Ref"
+          },
+          "route": {
+            "type": "string",
+            "title": "Route"
+          },
+          "container_type": {
+            "type": "string",
+            "title": "Container Type"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "teu": {
+            "type": "integer",
+            "title": "Teu"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "subtotal_cents": {
+            "type": "integer",
+            "title": "Subtotal Cents"
+          },
+          "vat_rate_bp": {
+            "type": "integer",
+            "title": "Vat Rate Bp"
+          },
+          "vat_cents": {
+            "type": "integer",
+            "title": "Vat Cents"
+          },
+          "total_cents": {
+            "type": "integer",
+            "title": "Total Cents"
+          },
+          "cost_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Cents"
+          },
+          "gross_profit_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gross Profit Cents"
+          },
+          "issue_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issue Date"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "overdue": {
+            "type": "boolean",
+            "title": "Overdue"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "company_id",
+          "booking_id",
+          "shipment_ref",
+          "route",
+          "container_type",
+          "quantity",
+          "teu",
+          "status",
+          "currency",
+          "subtotal_cents",
+          "vat_rate_bp",
+          "vat_cents",
+          "total_cents",
+          "issue_date",
+          "due_date",
+          "overdue",
+          "lines"
+        ],
+        "title": "InvoiceOut",
+        "description": "An invoice."
+      },
+      "MarginByCharge": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "revenue_cents": {
+            "type": "integer",
+            "title": "Revenue Cents"
+          },
+          "gross_profit_cents": {
+            "type": "integer",
+            "title": "Gross Profit Cents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "label",
+          "revenue_cents",
+          "gross_profit_cents"
+        ],
+        "title": "MarginByCharge",
+        "description": "Revenue and gross profit per charge code."
+      },
+      "MarginReport": {
+        "properties": {
+          "totals": {
+            "$ref": "#/components/schemas/MarginTotals"
+          },
+          "by_charge": {
+            "items": {
+              "$ref": "#/components/schemas/MarginByCharge"
+            },
+            "type": "array",
+            "title": "By Charge"
+          },
+          "shipments": {
+            "items": {
+              "$ref": "#/components/schemas/MarginShipment"
+            },
+            "type": "array",
+            "title": "Shipments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totals",
+          "by_charge",
+          "shipments"
+        ],
+        "title": "MarginReport",
+        "description": "Gross profit per shipment, per charge and per TEU."
+      },
+      "MarginShipment": {
+        "properties": {
+          "shipment_ref": {
+            "type": "string",
+            "title": "Shipment Ref"
+          },
+          "route": {
+            "type": "string",
+            "title": "Route"
+          },
+          "teu": {
+            "type": "integer",
+            "title": "Teu"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "revenue_cents": {
+            "type": "integer",
+            "title": "Revenue Cents"
+          },
+          "cost_cents": {
+            "type": "integer",
+            "title": "Cost Cents"
+          },
+          "gross_profit_cents": {
+            "type": "integer",
+            "title": "Gross Profit Cents"
+          },
+          "gross_profit_per_teu_cents": {
+            "type": "integer",
+            "title": "Gross Profit Per Teu Cents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "shipment_ref",
+          "route",
+          "teu",
+          "status",
+          "revenue_cents",
+          "cost_cents",
+          "gross_profit_cents",
+          "gross_profit_per_teu_cents"
+        ],
+        "title": "MarginShipment",
+        "description": "Revenue and gross profit of one shipment."
+      },
+      "MarginTotals": {
+        "properties": {
+          "shipments": {
+            "type": "integer",
+            "title": "Shipments"
+          },
+          "teu": {
+            "type": "integer",
+            "title": "Teu"
+          },
+          "revenue_cents": {
+            "type": "integer",
+            "title": "Revenue Cents"
+          },
+          "gross_profit_cents": {
+            "type": "integer",
+            "title": "Gross Profit Cents"
+          },
+          "gross_margin_pct": {
+            "type": "number",
+            "title": "Gross Margin Pct"
+          },
+          "gross_profit_per_teu_cents": {
+            "type": "integer",
+            "title": "Gross Profit Per Teu Cents"
+          },
+          "open_receivables_cents": {
+            "type": "integer",
+            "title": "Open Receivables Cents"
+          },
+          "overdue_cents": {
+            "type": "integer",
+            "title": "Overdue Cents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "shipments",
+          "teu",
+          "revenue_cents",
+          "gross_profit_cents",
+          "gross_margin_pct",
+          "gross_profit_per_teu_cents",
+          "open_receivables_cents",
+          "overdue_cents"
+        ],
+        "title": "MarginTotals",
+        "description": "Totals across all non-void invoices."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

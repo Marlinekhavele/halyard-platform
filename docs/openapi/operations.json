@@ -1,0 +1,1522 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Halyard Operations",
+    "description": "Shipments, containers, milestones, tracking events and documents.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tracking/webhook": {
+      "post": {
+        "tags": [
+          "tracking"
+        ],
+        "summary": "Tracking Webhook",
+        "description": "Receives container events from the tracking data provider.",
+        "operationId": "tracking_webhook_tracking_webhook_post",
+        "parameters": [
+          {
+            "name": "x-tracking-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tracking-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackingWebhook"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackingResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{key}/simulate": {
+      "post": {
+        "tags": [
+          "tracking"
+        ],
+        "summary": "Simulate",
+        "description": "Demo helper: moves the shipment on as if every container reported.",
+        "operationId": "simulate_shipments__key__simulate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateStep"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments": {
+      "get": {
+        "tags": [
+          "shipments"
+        ],
+        "summary": "List Shipments",
+        "description": "Lists shipments, earliest arrival first.",
+        "operationId": "list_shipments_shipments_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "needs_action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Needs Action"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShipmentSummary"
+                  },
+                  "title": "Response List Shipments Shipments Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{key}": {
+      "get": {
+        "tags": [
+          "shipments"
+        ],
+        "summary": "Get Shipment",
+        "description": "Returns one shipment by id or reference.",
+        "operationId": "get_shipment_shipments__key__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stats": {
+      "get": {
+        "tags": [
+          "shipments"
+        ],
+        "summary": "Stats",
+        "description": "Returns headline numbers for the dashboard.",
+        "operationId": "stats_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentStats"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/documents": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "List Documents",
+        "description": "Lists documents; ``status=open`` shows what waits on the caller.",
+        "operationId": "list_documents_documents_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentOut"
+                  },
+                  "title": "Response List Documents Documents Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/{doc_id}/upload": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Upload Document",
+        "description": "Uploads a new version of a document.",
+        "operationId": "upload_document_documents__doc_id__upload_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_document_documents__doc_id__upload_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/{doc_id}/file": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Download Document",
+        "description": "Downloads a document's file.",
+        "operationId": "download_document_documents__doc_id__file_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/{doc_id}/review": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Review Document",
+        "description": "Approves a document or sends it back with a note.",
+        "operationId": "review_document_documents__doc_id__review_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewDocument"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_upload_document_documents__doc_id__upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_document_documents__doc_id__upload_post"
+      },
+      "ContainerOut": {
+        "properties": {
+          "number": {
+            "type": "string",
+            "title": "Number"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "last_event": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event"
+          },
+          "last_event_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event At"
+          },
+          "last_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Location"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "type",
+          "last_event",
+          "last_event_at",
+          "last_location"
+        ],
+        "title": "ContainerOut",
+        "description": "A container and its latest tracking event."
+      },
+      "DocumentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "shipment_id": {
+            "type": "string",
+            "title": "Shipment Id"
+          },
+          "shipment_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shipment Ref"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type"
+          },
+          "size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Bytes"
+          },
+          "checks": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checks"
+          },
+          "uploaded_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploaded By"
+          },
+          "uploaded_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploaded At"
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "shipment_id",
+          "doc_type",
+          "label",
+          "status",
+          "due_date",
+          "note",
+          "filename",
+          "content_type",
+          "size_bytes",
+          "checks",
+          "uploaded_by",
+          "uploaded_at",
+          "reviewed_by",
+          "reviewed_at"
+        ],
+        "title": "DocumentOut",
+        "description": "A shipment document."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "MilestoneOut": {
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "title": "Seq"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "planned_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Planned At"
+          },
+          "actual_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual At"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq",
+          "code",
+          "label",
+          "planned_at",
+          "actual_at",
+          "location"
+        ],
+        "title": "MilestoneOut",
+        "description": "A planned or reached milestone."
+      },
+      "ReviewDocument": {
+        "properties": {
+          "approve": {
+            "type": "boolean",
+            "title": "Approve"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "approve"
+        ],
+        "title": "ReviewDocument",
+        "description": "Approve a document, or send it back with a note."
+      },
+      "ShipmentDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "booking_id": {
+            "type": "string",
+            "title": "Booking Id"
+          },
+          "company_id": {
+            "type": "string",
+            "title": "Company Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "pol": {
+            "type": "string",
+            "title": "Pol"
+          },
+          "pod": {
+            "type": "string",
+            "title": "Pod"
+          },
+          "via": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Via"
+          },
+          "pol_name": {
+            "type": "string",
+            "title": "Pol Name"
+          },
+          "pod_name": {
+            "type": "string",
+            "title": "Pod Name"
+          },
+          "via_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Via Name"
+          },
+          "carrier": {
+            "type": "string",
+            "title": "Carrier"
+          },
+          "vessel": {
+            "type": "string",
+            "title": "Vessel"
+          },
+          "voyage": {
+            "type": "string",
+            "title": "Voyage"
+          },
+          "etd": {
+            "type": "string",
+            "format": "date",
+            "title": "Etd"
+          },
+          "eta": {
+            "type": "string",
+            "format": "date",
+            "title": "Eta"
+          },
+          "planned_eta": {
+            "type": "string",
+            "format": "date",
+            "title": "Planned Eta"
+          },
+          "delay_days": {
+            "type": "integer",
+            "title": "Delay Days"
+          },
+          "container_type": {
+            "type": "string",
+            "title": "Container Type"
+          },
+          "container_count": {
+            "type": "integer",
+            "title": "Container Count"
+          },
+          "commodity": {
+            "type": "string",
+            "title": "Commodity"
+          },
+          "open_documents": {
+            "type": "integer",
+            "title": "Open Documents"
+          },
+          "progress": {
+            "type": "number",
+            "title": "Progress"
+          },
+          "next_milestone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Milestone"
+          },
+          "needs_action": {
+            "type": "boolean",
+            "title": "Needs Action"
+          },
+          "contact_email": {
+            "type": "string",
+            "title": "Contact Email"
+          },
+          "incoterm": {
+            "type": "string",
+            "title": "Incoterm"
+          },
+          "gross_weight_kg": {
+            "type": "integer",
+            "title": "Gross Weight Kg"
+          },
+          "bill_of_lading": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill Of Lading"
+          },
+          "delay_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Reason"
+          },
+          "hold_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hold Reason"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          },
+          "containers": {
+            "items": {
+              "$ref": "#/components/schemas/ContainerOut"
+            },
+            "type": "array",
+            "title": "Containers"
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneOut"
+            },
+            "type": "array",
+            "title": "Milestones"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentOut"
+            },
+            "type": "array",
+            "title": "Documents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ref",
+          "booking_id",
+          "company_id",
+          "status",
+          "pol",
+          "pod",
+          "via",
+          "pol_name",
+          "pod_name",
+          "via_name",
+          "carrier",
+          "vessel",
+          "voyage",
+          "etd",
+          "eta",
+          "planned_eta",
+          "delay_days",
+          "container_type",
+          "container_count",
+          "commodity",
+          "open_documents",
+          "progress",
+          "next_milestone",
+          "needs_action",
+          "contact_email",
+          "incoterm",
+          "gross_weight_kg",
+          "bill_of_lading",
+          "delay_reason",
+          "hold_reason",
+          "delivered_at",
+          "containers",
+          "milestones",
+          "documents"
+        ],
+        "title": "ShipmentDetail",
+        "description": "A shipment with containers, milestones and documents."
+      },
+      "ShipmentStats": {
+        "properties": {
+          "active": {
+            "type": "integer",
+            "title": "Active"
+          },
+          "active_teu": {
+            "type": "integer",
+            "title": "Active Teu"
+          },
+          "needs_action": {
+            "type": "integer",
+            "title": "Needs Action"
+          },
+          "arriving_7_days": {
+            "type": "integer",
+            "title": "Arriving 7 Days"
+          },
+          "delayed": {
+            "type": "integer",
+            "title": "Delayed"
+          },
+          "delivered": {
+            "type": "integer",
+            "title": "Delivered"
+          },
+          "documents_to_check": {
+            "type": "integer",
+            "title": "Documents To Check"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active",
+          "active_teu",
+          "needs_action",
+          "arriving_7_days",
+          "delayed",
+          "delivered",
+          "documents_to_check"
+        ],
+        "title": "ShipmentStats",
+        "description": "Headline numbers for the dashboard."
+      },
+      "ShipmentSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "booking_id": {
+            "type": "string",
+            "title": "Booking Id"
+          },
+          "company_id": {
+            "type": "string",
+            "title": "Company Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "pol": {
+            "type": "string",
+            "title": "Pol"
+          },
+          "pod": {
+            "type": "string",
+            "title": "Pod"
+          },
+          "via": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Via"
+          },
+          "pol_name": {
+            "type": "string",
+            "title": "Pol Name"
+          },
+          "pod_name": {
+            "type": "string",
+            "title": "Pod Name"
+          },
+          "via_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Via Name"
+          },
+          "carrier": {
+            "type": "string",
+            "title": "Carrier"
+          },
+          "vessel": {
+            "type": "string",
+            "title": "Vessel"
+          },
+          "voyage": {
+            "type": "string",
+            "title": "Voyage"
+          },
+          "etd": {
+            "type": "string",
+            "format": "date",
+            "title": "Etd"
+          },
+          "eta": {
+            "type": "string",
+            "format": "date",
+            "title": "Eta"
+          },
+          "planned_eta": {
+            "type": "string",
+            "format": "date",
+            "title": "Planned Eta"
+          },
+          "delay_days": {
+            "type": "integer",
+            "title": "Delay Days"
+          },
+          "container_type": {
+            "type": "string",
+            "title": "Container Type"
+          },
+          "container_count": {
+            "type": "integer",
+            "title": "Container Count"
+          },
+          "commodity": {
+            "type": "string",
+            "title": "Commodity"
+          },
+          "open_documents": {
+            "type": "integer",
+            "title": "Open Documents"
+          },
+          "progress": {
+            "type": "number",
+            "title": "Progress"
+          },
+          "next_milestone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Milestone"
+          },
+          "needs_action": {
+            "type": "boolean",
+            "title": "Needs Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ref",
+          "booking_id",
+          "company_id",
+          "status",
+          "pol",
+          "pod",
+          "via",
+          "pol_name",
+          "pod_name",
+          "via_name",
+          "carrier",
+          "vessel",
+          "voyage",
+          "etd",
+          "eta",
+          "planned_eta",
+          "delay_days",
+          "container_type",
+          "container_count",
+          "commodity",
+          "open_documents",
+          "progress",
+          "next_milestone",
+          "needs_action"
+        ],
+        "title": "ShipmentSummary",
+        "description": "A shipment as shown in lists."
+      },
+      "SimulateStep": {
+        "properties": {
+          "event": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event",
+            "description": "Leave empty to move to the next milestone."
+          },
+          "occurred_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred At"
+          },
+          "new_eta": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Eta"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "title": "SimulateStep",
+        "description": "A simulated tracking event for every container of a shipment."
+      },
+      "TrackingResult": {
+        "properties": {
+          "shipment_ref": {
+            "type": "string",
+            "title": "Shipment Ref"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "applied": {
+            "type": "string",
+            "title": "Applied"
+          }
+        },
+        "type": "object",
+        "required": [
+          "shipment_ref",
+          "status",
+          "applied"
+        ],
+        "title": "TrackingResult",
+        "description": "What a tracking event changed."
+      },
+      "TrackingWebhook": {
+        "properties": {
+          "container_number": {
+            "type": "string",
+            "maxLength": 13,
+            "minLength": 11,
+            "title": "Container Number"
+          },
+          "event": {
+            "type": "string",
+            "title": "Event"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "new_eta": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Eta"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "container_number",
+          "event",
+          "occurred_at"
+        ],
+        "title": "TrackingWebhook",
+        "description": "Normalised tracking event.\n\nWrite a small adapter per provider (Vizion, Terminal49, ...) that maps\ntheir payload to this shape."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

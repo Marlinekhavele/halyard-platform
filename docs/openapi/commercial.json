@@ -1,0 +1,2125 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Halyard Commercial",
+    "description": "Ports, rates, surcharges, instant quotes, bookings and website leads.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ports": {
+      "get": {
+        "tags": [
+          "reference"
+        ],
+        "summary": "List Ports",
+        "description": "Lists every port we serve.",
+        "operationId": "list_ports_ports_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PortOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Ports Ports Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/estimate": {
+      "post": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Estimate",
+        "description": "Public, indicative price for the website. Nothing is saved.",
+        "operationId": "estimate_quotes_estimate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstimateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes": {
+      "post": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Create Quote",
+        "description": "Prices a request and saves it as a bookable quote.",
+        "operationId": "create_quote_quotes_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "List Quotes",
+        "description": "Lists the newest quotes the caller may see.",
+        "operationId": "list_quotes_quotes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuoteOut"
+                  },
+                  "title": "Response List Quotes Quotes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{quote_id}": {
+      "get": {
+        "tags": [
+          "quotes"
+        ],
+        "summary": "Get Quote",
+        "description": "Returns one quote.",
+        "operationId": "get_quote_quotes__quote_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Quote Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quotes/{quote_id}/options/{option_id}/book": {
+      "post": {
+        "tags": [
+          "bookings"
+        ],
+        "summary": "Book Option",
+        "description": "Customer accepts one option; ops then confirms it with the carrier.",
+        "operationId": "book_option_quotes__quote_id__options__option_id__book_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "quote_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Quote Id"
+            }
+          },
+          {
+            "name": "option_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Option Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptOption"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings": {
+      "get": {
+        "tags": [
+          "bookings"
+        ],
+        "summary": "List Bookings",
+        "description": "Lists bookings the caller may see.",
+        "operationId": "list_bookings_bookings_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingOut"
+                  },
+                  "title": "Response List Bookings Bookings Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/{booking_id}": {
+      "get": {
+        "tags": [
+          "bookings"
+        ],
+        "summary": "Get Booking",
+        "description": "Returns one booking.",
+        "operationId": "get_booking_bookings__booking_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "booking_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Booking Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/{booking_id}/confirm": {
+      "post": {
+        "tags": [
+          "bookings"
+        ],
+        "summary": "Confirm Booking",
+        "description": "Ops confirms space with the carrier.",
+        "operationId": "confirm_booking_bookings__booking_id__confirm_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "booking_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Booking Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmBooking"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/{booking_id}/cancel": {
+      "post": {
+        "tags": [
+          "bookings"
+        ],
+        "summary": "Cancel Booking",
+        "description": "Cancels a booking.",
+        "operationId": "cancel_booking_bookings__booking_id__cancel_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "booking_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Booking Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelBooking"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rates": {
+      "get": {
+        "tags": [
+          "rates"
+        ],
+        "summary": "List Rates",
+        "description": "Lists rates, optionally filtered by lane and container type.",
+        "operationId": "list_rates_rates_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "origin_region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Origin Region"
+            }
+          },
+          {
+            "name": "dest_region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dest Region"
+            }
+          },
+          {
+            "name": "container_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Container Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RateOut"
+                  },
+                  "title": "Response List Rates Rates Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rates/{rate_id}": {
+      "patch": {
+        "tags": [
+          "rates"
+        ],
+        "summary": "Update Rate",
+        "description": "Changes a rate's prices, transit time, validity or status.",
+        "operationId": "update_rate_rates__rate_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/surcharges": {
+      "get": {
+        "tags": [
+          "rates"
+        ],
+        "summary": "List Surcharges",
+        "description": "Lists surcharges.",
+        "operationId": "list_surcharges_surcharges_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SurchargeOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Surcharges Surcharges Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/vessels": {
+      "get": {
+        "tags": [
+          "rates"
+        ],
+        "summary": "Vessel Suggestions",
+        "description": "Suggests vessel names for a carrier.",
+        "operationId": "vessel_suggestions_vessels_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "carrier",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Carrier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Vessel Suggestions Vessels Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leads": {
+      "get": {
+        "tags": [
+          "leads"
+        ],
+        "summary": "List Leads",
+        "description": "Lists website leads, newest first.",
+        "operationId": "list_leads_leads_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LeadOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Leads Leads Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "leads"
+        ],
+        "summary": "Create Lead",
+        "description": "Quote request from the public website. No sign-in needed.",
+        "operationId": "create_lead_leads_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadReceived"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leads/{lead_id}": {
+      "patch": {
+        "tags": [
+          "leads"
+        ],
+        "summary": "Update Lead",
+        "description": "Moves a lead through the sales pipeline.",
+        "operationId": "update_lead_leads__lead_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "lead_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Lead Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AcceptOption": {
+        "properties": {
+          "gross_weight_kg": {
+            "type": "integer",
+            "maximum": 1500000.0,
+            "minimum": 100.0,
+            "title": "Gross Weight Kg"
+          },
+          "supplier_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "gross_weight_kg"
+        ],
+        "title": "AcceptOption",
+        "description": "Details the customer adds when booking an option."
+      },
+      "BookingOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "quote_id": {
+            "type": "string",
+            "title": "Quote Id"
+          },
+          "company_id": {
+            "type": "string",
+            "title": "Company Id"
+          },
+          "requested_by_email": {
+            "type": "string",
+            "title": "Requested By Email"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "pol": {
+            "type": "string",
+            "title": "Pol"
+          },
+          "pod": {
+            "type": "string",
+            "title": "Pod"
+          },
+          "via_port": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Via Port"
+          },
+          "carrier": {
+            "type": "string",
+            "title": "Carrier"
+          },
+          "container_type": {
+            "type": "string",
+            "title": "Container Type"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "commodity": {
+            "type": "string",
+            "title": "Commodity"
+          },
+          "incoterm": {
+            "type": "string",
+            "title": "Incoterm"
+          },
+          "gross_weight_kg": {
+            "type": "integer",
+            "title": "Gross Weight Kg"
+          },
+          "cargo_value_cents": {
+            "type": "integer",
+            "title": "Cargo Value Cents"
+          },
+          "supplier_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "etd": {
+            "type": "string",
+            "format": "date",
+            "title": "Etd"
+          },
+          "eta": {
+            "type": "string",
+            "format": "date",
+            "title": "Eta"
+          },
+          "vessel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vessel"
+          },
+          "voyage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voyage"
+          },
+          "total_sell_cents": {
+            "type": "integer",
+            "title": "Total Sell Cents"
+          },
+          "total_cost_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cost Cents"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "cancel_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ref",
+          "quote_id",
+          "company_id",
+          "requested_by_email",
+          "status",
+          "pol",
+          "pod",
+          "via_port",
+          "carrier",
+          "container_type",
+          "quantity",
+          "commodity",
+          "incoterm",
+          "gross_weight_kg",
+          "cargo_value_cents",
+          "supplier_name",
+          "notes",
+          "etd",
+          "eta",
+          "vessel",
+          "voyage",
+          "total_sell_cents",
+          "lines",
+          "created_at",
+          "confirmed_at",
+          "cancel_reason"
+        ],
+        "title": "BookingOut",
+        "description": "A booking."
+      },
+      "CancelBooking": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "CancelBooking",
+        "description": "Why a booking is cancelled."
+      },
+      "ConfirmBooking": {
+        "properties": {
+          "vessel": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Vessel"
+          },
+          "voyage": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 2,
+            "title": "Voyage"
+          },
+          "etd": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etd"
+          },
+          "eta": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vessel",
+          "voyage"
+        ],
+        "title": "ConfirmBooking",
+        "description": "Ops confirms carrier space, optionally with a changed schedule."
+      },
+      "EstimateOut": {
+        "properties": {
+          "pol": {
+            "type": "string",
+            "title": "Pol"
+          },
+          "pod": {
+            "type": "string",
+            "title": "Pod"
+          },
+          "container_type": {
+            "type": "string",
+            "title": "Container Type"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionOut"
+            },
+            "type": "array",
+            "title": "Options"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": "Indicative all-in price. Sign up to book and lock this price for 7 days."
+          }
+        },
+        "type": "object",
+        "required": [
+          "pol",
+          "pod",
+          "container_type",
+          "quantity",
+          "options"
+        ],
+        "title": "EstimateOut",
+        "description": "A public, indicative price."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LeadCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "company": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Company"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "teu_per_year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teu Per Year"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website",
+            "description": "Honeypot field; must stay empty."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "company",
+          "email"
+        ],
+        "title": "LeadCreate",
+        "description": "A contact form submission from the website."
+      },
+      "LeadOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "company": {
+            "type": "string",
+            "title": "Company"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "teu_per_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teu Per Year"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "company",
+          "email",
+          "phone",
+          "origin",
+          "destination",
+          "teu_per_year",
+          "message",
+          "status",
+          "created_at"
+        ],
+        "title": "LeadOut",
+        "description": "A lead, for ops."
+      },
+      "LeadReceived": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "received"
+          }
+        },
+        "type": "object",
+        "title": "LeadReceived",
+        "description": "Acknowledgement of a lead submission."
+      },
+      "LeadUpdate": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "pattern": "^(new|contacted|won|lost)$",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "LeadUpdate",
+        "description": "A lead's new status."
+      },
+      "LineOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "sell_cents": {
+            "type": "integer",
+            "title": "Sell Cents"
+          },
+          "cost_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Cents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "label",
+          "quantity",
+          "sell_cents"
+        ],
+        "title": "LineOut",
+        "description": "One charge. ``cost_cents`` is only shown to ops."
+      },
+      "OptionOut": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "carrier": {
+            "type": "string",
+            "title": "Carrier"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "via_port": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Via Port"
+          },
+          "etd": {
+            "type": "string",
+            "format": "date",
+            "title": "Etd"
+          },
+          "eta": {
+            "type": "string",
+            "format": "date",
+            "title": "Eta"
+          },
+          "transit_days": {
+            "type": "integer",
+            "title": "Transit Days"
+          },
+          "co2_kg": {
+            "type": "integer",
+            "title": "Co2 Kg"
+          },
+          "total_sell_cents": {
+            "type": "integer",
+            "title": "Total Sell Cents"
+          },
+          "total_cost_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cost Cents"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "carrier",
+          "service",
+          "via_port",
+          "etd",
+          "eta",
+          "transit_days",
+          "co2_kg",
+          "total_sell_cents",
+          "lines"
+        ],
+        "title": "OptionOut",
+        "description": "One priced sailing. ``id`` is None for unsaved estimates."
+      },
+      "PortOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country"
+          },
+          "region": {
+            "type": "string",
+            "title": "Region"
+          },
+          "is_hub": {
+            "type": "boolean",
+            "title": "Is Hub"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "country",
+          "region",
+          "is_hub"
+        ],
+        "title": "PortOut",
+        "description": "A port we serve."
+      },
+      "QuoteCreate": {
+        "properties": {
+          "pol": {
+            "type": "string",
+            "maxLength": 5,
+            "minLength": 5,
+            "title": "Pol",
+            "description": "Port of loading, UN/LOCODE"
+          },
+          "pod": {
+            "type": "string",
+            "maxLength": 5,
+            "minLength": 5,
+            "title": "Pod",
+            "description": "Port of discharge, UN/LOCODE"
+          },
+          "container_type": {
+            "type": "string",
+            "pattern": "^(20DV|40DV|40HC|40RF)$",
+            "title": "Container Type"
+          },
+          "quantity": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Quantity"
+          },
+          "ready_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Ready Date"
+          },
+          "incoterm": {
+            "type": "string",
+            "pattern": "^(EXW|FCA|FOB|CFR|CIF|CPT|CIP|DAP|DPU|DDP)$",
+            "title": "Incoterm",
+            "default": "FOB"
+          },
+          "commodity": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Commodity",
+            "default": "General cargo"
+          },
+          "cargo_value_cents": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Cargo Value Cents",
+            "default": 0
+          },
+          "customs": {
+            "type": "boolean",
+            "title": "Customs",
+            "default": false
+          },
+          "trucking": {
+            "type": "boolean",
+            "title": "Trucking",
+            "default": false
+          },
+          "insurance": {
+            "type": "boolean",
+            "title": "Insurance",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "pol",
+          "pod",
+          "container_type",
+          "quantity",
+          "ready_date"
+        ],
+        "title": "QuoteCreate",
+        "description": "A price request."
+      },
+      "QuoteOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "company_id": {
+            "type": "string",
+            "title": "Company Id"
+          },
+          "created_by_email": {
+            "type": "string",
+            "title": "Created By Email"
+          },
+          "pol": {
+            "type": "string",
+            "title": "Pol"
+          },
+          "pod": {
+            "type": "string",
+            "title": "Pod"
+          },
+          "container_type": {
+            "type": "string",
+            "title": "Container Type"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "ready_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Ready Date"
+          },
+          "incoterm": {
+            "type": "string",
+            "title": "Incoterm"
+          },
+          "commodity": {
+            "type": "string",
+            "title": "Commodity"
+          },
+          "cargo_value_cents": {
+            "type": "integer",
+            "title": "Cargo Value Cents"
+          },
+          "customs": {
+            "type": "boolean",
+            "title": "Customs"
+          },
+          "trucking": {
+            "type": "boolean",
+            "title": "Trucking"
+          },
+          "insurance": {
+            "type": "boolean",
+            "title": "Insurance"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid Until"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionOut"
+            },
+            "type": "array",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ref",
+          "company_id",
+          "created_by_email",
+          "pol",
+          "pod",
+          "container_type",
+          "quantity",
+          "ready_date",
+          "incoterm",
+          "commodity",
+          "cargo_value_cents",
+          "customs",
+          "trucking",
+          "insurance",
+          "status",
+          "valid_until",
+          "created_at",
+          "options"
+        ],
+        "title": "QuoteOut",
+        "description": "A saved quote."
+      },
+      "RateOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "origin_region": {
+            "type": "string",
+            "title": "Origin Region"
+          },
+          "dest_region": {
+            "type": "string",
+            "title": "Dest Region"
+          },
+          "carrier": {
+            "type": "string",
+            "title": "Carrier"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "via_port": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Via Port"
+          },
+          "container_type": {
+            "type": "string",
+            "title": "Container Type"
+          },
+          "buy_cents": {
+            "type": "integer",
+            "title": "Buy Cents"
+          },
+          "sell_cents": {
+            "type": "integer",
+            "title": "Sell Cents"
+          },
+          "transit_days": {
+            "type": "integer",
+            "title": "Transit Days"
+          },
+          "sailing_weekday": {
+            "type": "integer",
+            "title": "Sailing Weekday"
+          },
+          "co2_factor": {
+            "type": "number",
+            "title": "Co2 Factor"
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date",
+            "title": "Valid Until"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "origin_region",
+          "dest_region",
+          "carrier",
+          "service",
+          "via_port",
+          "container_type",
+          "buy_cents",
+          "sell_cents",
+          "transit_days",
+          "sailing_weekday",
+          "co2_factor",
+          "valid_until",
+          "active"
+        ],
+        "title": "RateOut",
+        "description": "A rate, for ops."
+      },
+      "RateUpdate": {
+        "properties": {
+          "buy_cents": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buy Cents"
+          },
+          "sell_cents": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sell Cents"
+          },
+          "transit_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 90.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transit Days"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "title": "RateUpdate",
+        "description": "Partial update of a rate."
+      },
+      "SurchargeOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "sell_value": {
+            "type": "integer",
+            "title": "Sell Value"
+          },
+          "cost_value": {
+            "type": "integer",
+            "title": "Cost Value"
+          },
+          "min_sell_cents": {
+            "type": "integer",
+            "title": "Min Sell Cents"
+          },
+          "min_cost_cents": {
+            "type": "integer",
+            "title": "Min Cost Cents"
+          },
+          "container_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Container Type"
+          },
+          "option": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Option"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "label",
+          "basis",
+          "sell_value",
+          "cost_value",
+          "min_sell_cents",
+          "min_cost_cents",
+          "container_type",
+          "option"
+        ],
+        "title": "SurchargeOut",
+        "description": "A surcharge, for ops."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

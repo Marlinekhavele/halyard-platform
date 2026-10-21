@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "halyard-operations"
+version = "0.1.0"
+description = "Halyard operations service: Shipments, tracking, documents."
+requires-python = ">=3.11"
+dependencies = ["halyard-common", "python-multipart>=0.0.9"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

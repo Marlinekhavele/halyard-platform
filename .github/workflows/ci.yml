@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint (Google style)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install "ruff>=0.6"
+      - name: Lint, docstrings and imports
+        run: ruff check --output-format=github .
+      - name: Formatting
+        run: ruff format --check .
+
+  test:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Unit, integration and end-to-end tests (SQLite) with coverage
+        # Sources, branch coverage and the 90% floor live in .coveragerc.
+        run: >-
+          python -m pytest -q --cov
+          --cov-report=term --cov-report=xml --cov-report=html
+      - name: Upload coverage report
+        if: always() && matrix.python == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: |
+            coverage.xml
+            htmlcov/
+
+  postgres:
+    name: Postgres (e2e, concurrency, migrations)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+    env:
+      PG: postgresql+asyncpg://postgres:postgres@localhost:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Create one database per service
+        run: |
+          for db in accounts commercial operations billing notifications; do
+            PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE halyard_$db;"
+          done
+      - name: End-to-end and concurrency tests
+        run: python -m pytest tests/e2e -q
+        env:
+          E2E_POSTGRES: ${{ env.PG }}
+      - name: Migrations (upgrade, drift check, downgrade, upgrade)
+        run: |
+          for s in accounts commercial operations billing notifications; do
+            echo "== $s"
+            db_var="$(echo "$s" | tr a-z A-Z)_DATABASE_URL"
+            export "$db_var=$PG/halyard_$s"
+            PGPASSWORD=postgres psql -q -h localhost -U postgres -d "halyard_$s" \
+              -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+            (cd "services/$s" && alembic upgrade head && alembic check \
+              && alembic downgrade base && alembic upgrade head)
+          done
