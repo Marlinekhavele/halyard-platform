@@ -17,3 +17,8 @@ storage/
 .coverage
 coverage.xml
 htmlcov/
+
+# Production secrets; never commit real deployment environment files
+.env.production
+.env.production.*
+!.env.production.example
