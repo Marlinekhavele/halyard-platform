@@ -1,0 +1,2 @@
+# Optional load-testing dependencies; kept out of the production runtime.
+locust>=2.31,<3.0

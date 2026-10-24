@@ -1,0 +1,151 @@
+# Production-oriented overlay for the existing backend Compose stack.
+# Requires Docker Compose v2.24.4+ for the !override / !reset tags.
+# The base docker-compose.yml remains the local-development configuration.
+services:
+  gateway:
+    image: traefik:v3.7.15
+    command: !override
+      - --providers.docker=true
+      - --providers.docker.endpoint=tcp://docker-socket-proxy:2375
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=halyard
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?set ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --api.dashboard=false
+      - --accesslog=true
+    ports: !override
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes: !override
+      - letsencrypt:/letsencrypt
+    depends_on:
+      - docker-socket-proxy
+    networks: !override
+      - halyard
+      - docker-api
+
+  # Traefik reads Docker metadata through a narrowly configured API proxy
+  # rather than mounting the full Docker socket into the public edge router.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      EVENTS: 1
+      INFO: 1
+      NETWORKS: 1
+      PING: 1
+      VERSION: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - docker-api
+
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+
+  rabbitmq:
+    environment:
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}
+    ports: !reset []
+
+  mailpit:
+    profiles: !override [development]
+    ports: !reset []
+
+  jaeger:
+    ports: !reset []
+
+  accounts:
+    environment:
+      ENVIRONMENT: production
+      SEED_DEMO_DATA: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      BROKER_URL: amqp://halyard:${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}@rabbitmq:5672/
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/halyard_accounts
+    labels:
+      - traefik.http.routers.accounts.rule=Host(`${API_HOST:?set API_HOST}`) && PathPrefix(`/api/accounts`)
+      - traefik.http.routers.accounts.entrypoints=websecure
+      - traefik.http.routers.accounts.tls=true
+      - traefik.http.routers.accounts.tls.certresolver=letsencrypt
+
+  commercial:
+    environment:
+      ENVIRONMENT: production
+      SEED_DEMO_DATA: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      BROKER_URL: amqp://halyard:${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}@rabbitmq:5672/
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/halyard_commercial
+    labels:
+      - traefik.http.routers.commercial.rule=Host(`${API_HOST:?set API_HOST}`) && PathPrefix(`/api/commercial`)
+      - traefik.http.routers.commercial.entrypoints=websecure
+      - traefik.http.routers.commercial.tls=true
+      - traefik.http.routers.commercial.tls.certresolver=letsencrypt
+
+  operations:
+    environment:
+      ENVIRONMENT: production
+      SEED_DEMO_DATA: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      BROKER_URL: amqp://halyard:${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}@rabbitmq:5672/
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/halyard_operations
+      TRACKING_WEBHOOK_TOKEN: ${TRACKING_WEBHOOK_TOKEN:?set TRACKING_WEBHOOK_TOKEN}
+    labels:
+      - traefik.http.routers.operations.rule=Host(`${API_HOST:?set API_HOST}`) && PathPrefix(`/api/operations`)
+      - traefik.http.routers.operations.entrypoints=websecure
+      - traefik.http.routers.operations.tls=true
+      - traefik.http.routers.operations.tls.certresolver=letsencrypt
+
+  billing:
+    environment:
+      ENVIRONMENT: production
+      SEED_DEMO_DATA: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      BROKER_URL: amqp://halyard:${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}@rabbitmq:5672/
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/halyard_billing
+    labels:
+      - traefik.http.routers.billing.rule=Host(`${API_HOST:?set API_HOST}`) && PathPrefix(`/api/billing`)
+      - traefik.http.routers.billing.entrypoints=websecure
+      - traefik.http.routers.billing.tls=true
+      - traefik.http.routers.billing.tls.certresolver=letsencrypt
+
+  notifications:
+    environment:
+      ENVIRONMENT: production
+      SEED_DEMO_DATA: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      BROKER_URL: amqp://halyard:${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}@rabbitmq:5672/
+      DATABASE_URL: postgresql+asyncpg://halyard:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/halyard_notifications
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:?set SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?set SMTP_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM:?set MAIL_FROM}
+      APP_URL: ${PUBLIC_URL:?set PUBLIC_URL}/app
+    labels:
+      - traefik.http.routers.notifications.rule=Host(`${API_HOST:?set API_HOST}`) && PathPrefix(`/api/notifications`)
+      - traefik.http.routers.notifications.entrypoints=websecure
+      - traefik.http.routers.notifications.tls=true
+      - traefik.http.routers.notifications.tls.certresolver=letsencrypt
+
+networks:
+  docker-api:
+    internal: true
+
+volumes:
+  letsencrypt: {}

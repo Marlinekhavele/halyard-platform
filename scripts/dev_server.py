@@ -110,9 +110,7 @@ def combined_openapi(services: dict) -> dict:
     Returns:
         One OpenAPI document with gateway paths such as ``/api/billing/...``.
     """
-    from halyard_common import (
-        openapi,  # pylint: disable=import-outside-toplevel
-    )
+    from halyard_common import openapi
 
     return openapi.merge(
         {name: service_app.openapi() for name, service_app in services.items()},
